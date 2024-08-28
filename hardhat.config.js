@@ -7,7 +7,7 @@ require("@openzeppelin/hardhat-upgrades");
 module.exports = {
   solidity: "0.8.20",
   networks: {
-    zircuit_testnet: {
+    zircuit: {
       url: process.env.RPC_URL,
       accounts: [process.env.PRIVATE_KEY],
     },
