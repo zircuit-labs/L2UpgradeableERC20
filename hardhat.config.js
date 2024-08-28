@@ -23,7 +23,7 @@ module.exports = {
     customChains: [
       {
         network: "zircuit",
-        chainId: process.env.CHAIN_ID || 0,
+        chainId: Number(process.env.CHAIN_ID || "0"),
         urls: {
           apiURL: process.env.API_URL || "",
           browserURL: process.env.BROWSER_URL || "",
