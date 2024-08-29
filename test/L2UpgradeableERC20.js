@@ -112,6 +112,15 @@ describe("L2UpgradeableERC20", function () {
     expect(await sixDecimalsToken.l2Bridge()).to.be.equal(admin);
   });
 
+  it("Cannot be reinitialized", async function () {
+    const { admin, abcToken } = await loadFixture(createTokenBeaconProxy);
+    await expect(
+      abcToken
+        .connect(admin)
+        .initialize(admin, remoteToken, "AbcToken", "ABC", 18)
+    ).to.be.revertedWithCustomError(abcToken, "InvalidInitialization");
+  });
+
   it("Should mint tokens", async function () {
     const { admin, unknown, abcToken } = await loadFixture(
       createTokenBeaconProxy
@@ -140,6 +149,28 @@ describe("L2UpgradeableERC20", function () {
       .reverted;
     await expect(abcToken.connect(unknown).burn(unknown.address, amount)).to.be
       .reverted;
+  });
+
+  it("Should transfer tokens", async function () {
+    const { admin, unknown, sixDecimalsToken } = await loadFixture(
+      createTokenBeaconProxy
+    );
+    const amount = 100;
+    await sixDecimalsToken.connect(unknown).transfer(admin.address, amount);
+    expect(await sixDecimalsToken.balanceOf(unknown.address)).to.be.equal(
+      initialUserBalance - amount
+    );
+    expect(await sixDecimalsToken.balanceOf(admin.address)).to.be.equal(amount);
+  });
+
+  it("Should not transfer tokens if balance is too low", async function () {
+    const { admin, unknown, abcToken } = await loadFixture(
+      createTokenBeaconProxy
+    );
+    const amount = 100;
+    await expect(
+      abcToken.connect(unknown).transfer(admin.address, amount)
+    ).to.be.revertedWithCustomError(abcToken, "ERC20InsufficientBalance");
   });
 
   it("Should support ERC165 Interface", async function () {
@@ -236,6 +267,38 @@ describe("L2UpgradeableERC20", function () {
 });
 
 describe("BeaconProxy", function () {
+  it("Should have correct owner", async function () {
+    const { admin, unknown, l1TokenBeacon, l2TokenBeacon } = await loadFixture(
+      createTokenBeaconProxy
+    );
+
+    expect(await l1TokenBeacon.connect(admin).owner()).to.be.equal(
+      admin.address
+    );
+
+    expect(await l2TokenBeacon.connect(admin).owner()).to.be.equal(
+      admin.address
+    );
+
+    await l1TokenBeacon.connect(admin).transferOwnership(unknown.address);
+    expect(await l1TokenBeacon.connect(admin).owner()).to.be.equal(
+      unknown.address
+    );
+
+    await expect(
+      l1TokenBeacon.connect(admin).transferOwnership(unknown.address)
+    ).to.be.reverted;
+
+    await l2TokenBeacon.connect(admin).transferOwnership(unknown.address);
+    expect(await l2TokenBeacon.connect(admin).owner()).to.be.equal(
+      unknown.address
+    );
+
+    await expect(
+      l2TokenBeacon.connect(admin).transferOwnership(unknown.address)
+    ).to.be.reverted;
+  });
+
   it("Should enable upgrade of existing beacon proxy", async function () {
     const { admin, l1TokenBeacon, abcToken, newImplementation, UpgradedToken } =
       await loadFixture(createTokenBeaconProxy);
