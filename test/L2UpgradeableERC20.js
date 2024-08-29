@@ -1,6 +1,23 @@
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
 
+/**
+ * Combines multiple arrays using a given function.
+ *
+ * @param {Function} fn - The function to combine elements from all arrays.
+ * @param {...Array} arrays - The arrays to combine.
+ * @returns {Array} - A new array with the results of applying the function to elements from all arrays.
+ */
+function zipWith(fn, ...arrays) {
+  // Determine the length of the shortest array to avoid out-of-bounds errors
+  const length = Math.min(...arrays.map((array) => array.length));
+
+  // Create a new array by applying the function to elements from all arrays
+  return Array.from({ length }, (_, i) =>
+    fn(...arrays.map((array) => array[i]))
+  );
+}
+
 const initialUserBalance = 10000;
 const remoteToken = "0xB82381A3fBD3FaFA77B3a7bE693342618240067b";
 
@@ -70,15 +87,27 @@ describe("L2UpgradeableERC20", function () {
   });
 
   it("Should set the right metadata", async function () {
-    const { abcToken, sixDecimalsToken } = await loadFixture(
+    const { admin, abcToken, sixDecimalsToken } = await loadFixture(
       createTokenBeaconProxy
     );
     expect(await abcToken.name()).to.be.equal("AbcToken");
     expect(await abcToken.symbol()).to.be.equal("ABC");
     expect(await abcToken.decimals()).to.be.equal(18);
+    expect(await abcToken.REMOTE_TOKEN()).to.be.equal(remoteToken);
+    expect(await abcToken.remoteToken()).to.be.equal(remoteToken);
+    expect(await abcToken.l1Token()).to.be.equal(remoteToken);
+    expect(await abcToken.BRIDGE()).to.be.equal(admin);
+    expect(await abcToken.bridge()).to.be.equal(admin);
+    expect(await abcToken.l2Bridge()).to.be.equal(admin);
     expect(await sixDecimalsToken.name()).to.be.equal("sixDecimalsToken");
     expect(await sixDecimalsToken.symbol()).to.be.equal("SIX");
     expect(await sixDecimalsToken.decimals()).to.be.equal(6);
+    expect(await sixDecimalsToken.REMOTE_TOKEN()).to.be.equal(remoteToken);
+    expect(await sixDecimalsToken.remoteToken()).to.be.equal(remoteToken);
+    expect(await sixDecimalsToken.l1Token()).to.be.equal(remoteToken);
+    expect(await sixDecimalsToken.BRIDGE()).to.be.equal(admin);
+    expect(await sixDecimalsToken.bridge()).to.be.equal(admin);
+    expect(await sixDecimalsToken.l2Bridge()).to.be.equal(admin);
   });
 
   it("Should mint tokens", async function () {
@@ -109,6 +138,43 @@ describe("L2UpgradeableERC20", function () {
       .reverted;
     await expect(abcToken.connect(unknown).burn(unknown.address, amount)).to.be
       .reverted;
+  });
+
+  it("Should support ERC165 Interface", async function () {
+    const { unknown, abcToken } = await loadFixture(createTokenBeaconProxy);
+    // Get the interface IDs
+    const iface1 = ethers.id("supportsInterface(bytes4)").substring(0, 10);
+    const iface1Bytes4 = ethers.dataSlice(iface1, 0, 4);
+
+    // Assert that iface1 matches IERC165's interfaceId
+    const IERC165 = "0x01ffc9a7"; // IERC165 interface ID
+    expect(iface1Bytes4).to.equal(IERC165);
+    expect(await abcToken.connect(unknown).supportsInterface(iface1Bytes4)).to
+      .be.true;
+
+    // Calculate the combined interface ID
+    const remoteTokenSelector =
+      abcToken.interface.getFunction("remoteToken").selector;
+    const bridgeSelector = abcToken.interface.getFunction("bridge").selector;
+    const mintSelector = abcToken.interface.getFunction("mint").selector;
+    const burnSelector = abcToken.interface.getFunction("burn").selector;
+
+    // Compute the XOR of selectors
+    const xorSelectors = zipWith(
+      (remoteTokenByte, bridgeByte, mintByte, burnByte) =>
+        remoteTokenByte ^ bridgeByte ^ mintByte ^ burnByte,
+      ethers.getBytes(remoteTokenSelector),
+      ethers.getBytes(bridgeSelector),
+      ethers.getBytes(mintSelector),
+      ethers.getBytes(burnSelector)
+    ).slice(0, 4);
+
+    // Get the bytes4
+    const iface3 = ethers.concat(xorSelectors.map((e) => ethers.toBeHex(e)));
+
+    const IOptimismMintableERC20 = "0xec4fc8e3"; // IOptimismMintableERC20 interface ID
+    expect(iface3).to.equal(IOptimismMintableERC20);
+    expect(await abcToken.supportsInterface(iface3)).to.be.true;
   });
 });
 
