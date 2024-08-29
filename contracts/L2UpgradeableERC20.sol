@@ -97,8 +97,8 @@ contract L2UpgradeableERC20 is ERC20PermitUpgradeable, IOptimismMintableERC20 {
     ) external pure virtual returns (bool) {
         bytes4 iface1 = type(ERC165Upgradeable).interfaceId;
         // Interface corresponding to the updated L2UpgradeableERC20 (this contract).
-        bytes4 iface3 = type(IOptimismMintableERC20).interfaceId;
-        return _interfaceId == iface1 || _interfaceId == iface3;
+        bytes4 iface2 = type(IOptimismMintableERC20).interfaceId;
+        return _interfaceId == iface1 || _interfaceId == iface2;
     }
 
     /// @custom:legacy
@@ -113,8 +113,6 @@ contract L2UpgradeableERC20 is ERC20PermitUpgradeable, IOptimismMintableERC20 {
         return BRIDGE;
     }
 
-    /// @custom:legacy
-    /// @notice Legacy getter for REMOTE_TOKEN.
     function remoteToken() public view returns (address) {
         return REMOTE_TOKEN;
     }
