@@ -30,7 +30,7 @@ The implementation contract can be verified on Zircuit Explorer using:
 npx hardhat verify --network zircuit IMPL_CONTRACT
 ```
 
-where `IMPL_CONTRACT` is the address of the contract that implement the token.
+where `IMPL_CONTRACT` is the address of the contract that implements the token.
 
 Verification of proxy contracts is a bit [more complex](https://forum.openzeppelin.com/t/how-to-verify-a-contract-on-etherscan-bscscan-polygonscan/14225).
 

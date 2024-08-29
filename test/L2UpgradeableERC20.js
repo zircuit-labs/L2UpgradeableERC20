@@ -79,11 +79,13 @@ async function createTokenBeaconProxy() {
 
 describe("L2UpgradeableERC20", function () {
   it("Should deploy L2UpgradeableERC20", async function () {
-    const { abcToken, sixDecimalsToken } = await loadFixture(
+    const { admin, abcToken, sixDecimalsToken } = await loadFixture(
       createTokenBeaconProxy
     );
     expect(await abcToken.getAddress()).to.be.not.null;
+    expect(await abcToken.balanceOf(admin.address)).to.be.equal(0);
     expect(await sixDecimalsToken.getAddress()).to.be.not.null;
+    expect(await sixDecimalsToken.balanceOf(admin.address)).to.be.equal(0);
   });
 
   it("Should set the right metadata", async function () {
@@ -175,6 +177,61 @@ describe("L2UpgradeableERC20", function () {
     const IOptimismMintableERC20 = "0xec4fc8e3"; // IOptimismMintableERC20 interface ID
     expect(iface3).to.equal(IOptimismMintableERC20);
     expect(await abcToken.supportsInterface(iface3)).to.be.true;
+  });
+
+  it("should permit and delegate with signature", async function () {
+    const { unknown, abcToken } = await loadFixture(createTokenBeaconProxy);
+    const noRoleUser = (await ethers.getSigners())[2].address;
+
+    const permitDomain = {
+      name: await abcToken.name(),
+      version: "1",
+      chainId: (await ethers.provider.getNetwork()).chainId,
+      verifyingContract: await abcToken.getAddress(),
+    };
+
+    const value = ethers.parseEther("1");
+    const deadline = (await ethers.provider.getBlock("latest")).timestamp + 1;
+    const nonce = 0;
+
+    const { v, r, s } = ethers.Signature.from(
+      await unknown.signTypedData(
+        permitDomain,
+        {
+          Permit: [
+            { name: "owner", type: "address" },
+            { name: "spender", type: "address" },
+            { name: "value", type: "uint256" },
+            { name: "nonce", type: "uint256" },
+            { name: "deadline", type: "uint256" },
+          ],
+        },
+        {
+          owner: unknown.address,
+          spender: noRoleUser,
+          value: value,
+          nonce: nonce,
+          deadline: deadline,
+        }
+      )
+    );
+
+    // Call permit function
+    await abcToken.permit(
+      unknown.address,
+      noRoleUser,
+      value,
+      deadline,
+      v,
+      r,
+      s
+    );
+
+    // Assert allowance and nonce
+    expect(await abcToken.allowance(unknown.address, noRoleUser)).to.equal(
+      value
+    );
+    expect(await abcToken.nonces(unknown.address)).to.equal(1);
   });
 });
 
