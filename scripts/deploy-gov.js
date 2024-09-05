@@ -5,7 +5,7 @@ async function main() {
   // Deploy the implementation contract with proxy
   const Executor = await ethers.getContractFactory("OptimismBridgeExecutor");
   console.log("Deploying...");
-  const newImplementation = await Executor.deploy("0x4200000000000000000000000000000000000007", "0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c", 0, 86400, 0, 1, "0x0000000000000000000000000000000000000000");
+  const newImplementation = await Executor.deploy(process.env.L2_MESSENGER, process.env.L1_EXECUTOR, 0, 86400, 0, 1, "0x0000000000000000000000000000000000000000");
   await newImplementation.waitForDeployment();
   console.log(await newImplementation.getAddress());
 }
