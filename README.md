@@ -42,3 +42,7 @@ npx hardhat verify --network zircuit GOV_CONTRACT CONSTR_ARGS
 ```
 
 where `GOV_CONTRACT` is the address of the governance contract, and `CONSTR_ARGS` are constructor arguments, e.g., `"0x4200000000000000000000000000000000000007" "0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c" 0 86400 0 1 "0x0000000000000000000000000000000000000000"`
+
+## Ownership Transfer
+
+Optionally, transfer ownership of the `ProxyAdmin` contract via the function `transferOwnership()`.
