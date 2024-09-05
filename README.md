@@ -31,3 +31,7 @@ npx hardhat verify --network zircuit PROXY_CONTRACT
 ```
 
 where `PROXY_CONTRACT` is the address of the Proxy contract that points to the token.
+
+## Ownership Transfer
+
+Optionally, transfer ownership of the `ProxyAdmin` contract via the function `transferOwnership()`.
