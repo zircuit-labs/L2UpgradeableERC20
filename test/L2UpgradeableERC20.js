@@ -78,6 +78,48 @@ async function createTokenBeaconProxy() {
 }
 
 describe("L2UpgradeableERC20", function () {
+  it("Can't deploy L2UpgradeableERC20 with zero addres bridge", async function () {
+    const L2UpgradeableERC20 = await ethers.getContractFactory(
+      "L2UpgradeableERC20"
+    );
+  
+    // Deploy beacon token
+    const l1TokenBeacon = await upgrades.deployBeacon(L2UpgradeableERC20);
+    await l1TokenBeacon.waitForDeployment();
+  
+    const l2TokenBeacon = await upgrades.deployBeacon(L2UpgradeableERC20);
+    await l2TokenBeacon.waitForDeployment();
+  
+    const [admin] = await ethers.getSigners();
+    // Create tokens
+    await expect(upgrades.deployBeaconProxy(
+      await l1TokenBeacon.getAddress(),
+      L2UpgradeableERC20,
+      ["0x0000000000000000000000000000000000000000", "0xB82381A3fBD3FaFA77B3a7bE693342618240067b", "AbcToken", "ABC", 18]
+    )).to.be.reverted;
+  });
+
+  it("Can't deploy L2UpgradeableERC20 with zero addres remote token", async function () {
+    const L2UpgradeableERC20 = await ethers.getContractFactory(
+      "L2UpgradeableERC20"
+    );
+  
+    // Deploy beacon token
+    const l1TokenBeacon = await upgrades.deployBeacon(L2UpgradeableERC20);
+    await l1TokenBeacon.waitForDeployment();
+  
+    const l2TokenBeacon = await upgrades.deployBeacon(L2UpgradeableERC20);
+    await l2TokenBeacon.waitForDeployment();
+  
+    const [admin] = await ethers.getSigners();
+    // Create tokens
+    await expect(upgrades.deployBeaconProxy(
+      await l1TokenBeacon.getAddress(),
+      L2UpgradeableERC20,
+      [admin.address, "0x0000000000000000000000000000000000000000", "AbcToken", "ABC", 18]
+    )).to.be.reverted;
+  });
+
   it("Should deploy L2UpgradeableERC20", async function () {
     const { admin, abcToken, sixDecimalsToken } = await loadFixture(
       createTokenBeaconProxy
