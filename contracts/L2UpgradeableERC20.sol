@@ -61,6 +61,8 @@ contract L2UpgradeableERC20 is ERC20PermitUpgradeable, IOptimismMintableERC20 {
     ) external initializer {
         __ERC20_init(_name, _symbol);
         __ERC20Permit_init(_name);
+        require(address(0) != _remoteToken);
+        require(address(0) != _bridge);
         REMOTE_TOKEN = _remoteToken;
         BRIDGE = _bridge;
         DECIMALS = _decimals;
