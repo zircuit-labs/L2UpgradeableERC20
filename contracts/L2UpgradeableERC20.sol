@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity 0.8.20;
 
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IOptimismMintableERC20} from "./interfaces/IOptimismMintableERC20.sol";
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
@@ -100,7 +101,8 @@ contract L2UpgradeableERC20 is ERC20PermitUpgradeable, IOptimismMintableERC20 {
         bytes4 iface1 = type(ERC165Upgradeable).interfaceId;
         // Interface corresponding to the updated L2UpgradeableERC20 (this contract).
         bytes4 iface2 = type(IOptimismMintableERC20).interfaceId;
-        return _interfaceId == iface1 || _interfaceId == iface2;
+        bytes4 iface3 = type(IERC20Permit).interfaceId;
+        return _interfaceId == iface1 || _interfaceId == iface2 || _interfaceId == iface3;
     }
 
     /// @custom:legacy
