@@ -86,7 +86,6 @@ contract L2UpgradeableERC20 is ERC20PermitUpgradeable, IOptimismMintableERC20 {
         address _from,
         uint256 _amount
     ) external virtual override(IOptimismMintableERC20) onlyBridge {
-        _spendAllowance(_from, msg.sender, _amount);
         _burn(_from, _amount);
         emit Burn(_from, _amount);
     }
